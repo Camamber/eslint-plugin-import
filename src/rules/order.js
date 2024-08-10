@@ -94,8 +94,8 @@ function findRootNode(node) {
 
 function commentOnSameLineAs(node) {
   return (token) => (token.type === 'Block' ||  token.type === 'Line')
-      && token.loc.start.line === token.loc.end.line
-      && token.loc.end.line === node.loc.end.line;
+    && token.loc.start.line === token.loc.end.line
+    && token.loc.end.line === node.loc.end.line;
 }
 
 function findEndOfLineWithComments(sourceCode, node) {
@@ -360,9 +360,20 @@ function mutateRanksToAlphabetize(imported, alphabetizeOptions) {
 
 function computePathRank(ranks, pathGroups, path, maxPosition) {
   for (let i = 0, l = pathGroups.length; i < l; i++) {
-    const { pattern, patternOptions, group, position = 1 } = pathGroups[i];
-    if (minimatch(path, pattern, patternOptions || { nocomment: true })) {
-      return ranks[group] + position / maxPosition;
+    const { pattern, patternOptions, patternType, group, position = 1 } = pathGroups[i];
+    switch (patternType) {
+      case 're':
+        if (new RegExp(pattern, patternOptions).test(path)) {
+          return ranks[group] + position / maxPosition;
+        }
+        break;
+
+      case 'glob':
+      default:
+        if (minimatch(path, pattern, patternOptions || { nocomment: true })) {
+          return ranks[group] + position / maxPosition;
+        }
+        break;
     }
   }
 }
@@ -533,7 +544,7 @@ function makeNewlinesBetweenReport(context, imported, newlinesBetweenImports, di
     const isStartOfDistinctGroup = getIsStartOfDistinctGroup(currentImport, previousImport);
 
     if (newlinesBetweenImports === 'always'
-        || newlinesBetweenImports === 'always-and-inside-groups') {
+      || newlinesBetweenImports === 'always-and-inside-groups') {
       if (currentImport.rank !== previousImport.rank && emptyLinesBetween === 0) {
         if (distinctGroup || !distinctGroup && isStartOfDistinctGroup) {
           context.report({
@@ -611,9 +622,13 @@ module.exports = {
                 patternOptions: {
                   type: 'object',
                 },
+                patternType: {
+                  type: 'string',
+                  enum: ['re', 'glob'],
+                  default: 'glob',
+                },
                 group: {
                   type: 'string',
-                  enum: types,
                 },
                 position: {
                   type: 'string',
