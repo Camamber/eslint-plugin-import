@@ -435,7 +435,7 @@ const types = ['builtin', 'external', 'internal', 'unknown', 'parent', 'sibling'
 function convertGroupsToRanks(groups) {
   const rankObject = groups.reduce(function (res, group, index) {
     [].concat(group).forEach(function (groupItem) {
-      if (types.indexOf(groupItem) === -1) {
+      if (types.indexOf(groupItem.split(':')[0]) === -1) {
         throw new Error(`Incorrect configuration of the rule: Unknown type \`${JSON.stringify(groupItem)}\``);
       }
       if (res[groupItem] !== undefined) {
@@ -625,7 +625,6 @@ module.exports = {
                 patternType: {
                   type: 'string',
                   enum: ['re', 'glob'],
-                  default: 'glob',
                 },
                 group: {
                   type: 'string',
